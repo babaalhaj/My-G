@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitget Scanner</title>
+  
+  <!-- jQuery & DataTables CSS/JS -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+  <style>
+    /* ===================== LAYOUT & THEME CSS ===================== */
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #22c55e;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    h1 { color: #e2e8f0; font-size: 1.75rem; margin-bottom: 1.5rem; }
+    h3 { color: #e2e8f0; margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Form Controls */
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover { background-color: var(--primary-hover); }
+    
+    label { 
+      margin-right: 1.2rem; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 0.4rem; 
+      cursor: pointer; 
+      color: #cbd5e1;
+    }
+
+    /* Base Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { padding: 0.85rem 1rem; text-align: left; }
+    th { background-color: rgba(255,255,255,0.03); font-weight: 600; color: #94a3b8; font-size: 0.9rem; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Badges & Status */
+    .status-idle { color: var(--text-muted); font-style: italic; }
+    .status-active { color: #4ade80; font-weight: 600; }
+    
+    .badge { 
+      background-color: rgba(34, 197, 94, 0.15); 
+      color: #4ade80; 
+      padding: 0.25rem 0.6rem; 
+      border-radius: 9999px; 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      border: 1px solid rgba(34, 197, 94, 0.3); 
+    }
+
+    /* Ratings */
+    .rating-StrongBuy { color: #4ade80; font-weight: 600; }
+    .rating-Buy { color: #60a5fa; font-weight: 600; }
+    .rating-Neutral { color: var(--text-muted); }
+
+    /* ===================== DATATABLES DARK MODE OVERRIDES ===================== */
+    table.dataTable tbody tr { background-color: transparent !important; }
+    table.dataTable tbody tr:hover { background-color: rgba(255,255,255,0.02) !important; }
+    
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+      color: var(--text-muted) !important;
+      margin-bottom: 1rem;
+      margin-top: 0.5rem;
+    }
+    .dataTables_wrapper select,
+    .dataTables_wrapper input {
+      background-color: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      outline: none;
+      margin-left: 0.5rem;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      color: var(--text-muted) !important;
+      border: 1px solid transparent !important;
+      border-radius: 4px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background: var(--primary) !important;
+      color: white !important;
+      border: 1px solid var(--primary) !important;
+    }
+    table.dataTable thead th, table.dataTable thead td,
+    table.dataTable.no-footer {
+      border-bottom: 1px solid var(--border) !important;
+    }
+  </style>
+</head>
+
+<body>
+<div style="font-family:-apple-system,sans-serif;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;"><a href="/" style="color:#2563eb;text-decoration:none;font-size:14px;font-weight:600;">← Back to Dashboard</a></div>
+
+<h1>Bitget Watch‑list + 1% Breakout Scanner</h1>
+
+<div class="card">
+  <button id="activateBtn">▶️ Enable Scanner & Audio</button>
+  <p style="margin-bottom: 0; margin-top: 1rem;">Scanner status: <span id="status" class="status-idle">Waiting for activation…</span></p>
+</div>
+
+<div class="card">
+  <h3>Time‑frame selection (ratings are derived from 24 h change)</h3>
+  <div style="margin-bottom: 1rem;">
+    <label><input type="checkbox" id="tfWeekly" checked> Weekly</label>
+    <label><input type="checkbox" id="tfDaily"  checked> Daily</label>
+    <label><input type="checkbox" id="tf4H"> 4 h</label>
+    <label><input type="checkbox" id="tf1H"> 1 h</label>
+    <label><input type="checkbox" id="tf30M"> 30 min</label>
+    <label><input type="checkbox" id="tf15M"> 15 min</label>
+    <label><input type="checkbox" id="tf5M"> 5 min</label>
+    <label><input type="checkbox" id="tf1M"> 1 min</label>
+  </div>
+  <button id="refreshBtn" class="button primary">🔄 Refresh Watch‑list</button>
+</div>
+
+<div class="card">
+  <h3>Live Matched Breakouts (≥ 1% 24 h change, ≥ $1 M volume)</h3>
+  <!-- DataTables will attach to this -->
+  <table id="breakoutTable" class="display">
+    <thead>
+      <tr><th>Symbol</th><th>Price (USDT)</th><th>24 h Δ %</th><th>24 h Volume (USD)</th></tr>
+    </thead>
+    <tbody>
+      <!-- Handled by JS -->
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Watch‑list (Buy / Strong Buy only)</h3>
+  <!-- DataTables will attach to this -->
+  <table id="watchlistTable" class="display">
+    <thead>
+      <tr>
+        <th>Symbol</th><th>Last Price (USDT)</th><th>24 h Volume (USD)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Handled by JS -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+/* ===================== CONFIG ===================== */
+const MIN_VOLUME_USD   = 1_000_000;   // filter
+const CHANGE_THRESHOLD = 1;           // breakout alert (%) 
+const BUY_MIN          = 2;           // % change to be considered a simple “Buy”
+const STRONG_BUY_MIN   = 5;           // % change → “Strong Buy”
+
+/* ==== TIME‑FRAME MAP ==== */
+const TF_MAP = {
+  tfWeekly:{label:'Weekly',  period:'1d'},
+  tfDaily :{label:'Daily',   period:'1d'},
+  tf4H    :{label:'4 h',     period:'4h'},
+  tf1H    :{label:'1 h',     period:'1h'},
+  tf30M   :{label:'30 min',  period:'30min'},
+  tf15M   :{label:'15 min',  period:'15min'},
+  tf5M    :{label:'5 min',   period:'5min'},
+  tf1M    :{label:'1 min',   period:'1min'}
+};
+
+/* ------------------- HELPER ------------------- */
+async function fetchJSON(url){
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} – ${url}`);
+  return await resp.json();
+}
+
+/* ------------------- 1️⃣ TICKER DATA ------------------- */
+async function getSpotTickers(){
+  const url = 'https://api.bitget.com/api/v2/spot/market/tickers';
+  const data = await fetchJSON(url);
+  if (data.code !== "00000") throw new Error('Bitget ticker API error');
+  return data.data.filter(t=>{
+    const isUSDT = t.symbol?.endsWith('USDT');
+    const price   = Number(t.lastPr);
+    const volume  = Number(t.usdtVolume || t.quoteVolume || 0);
+    return isUSDT && price * volume >= MIN_VOLUME_USD;
+  });
+}
+
+/* ------------------- 2️⃣ RATING FROM 24h CHANGE ------------------- */
+function rateFromChange(changePct){
+  if (changePct >= STRONG_BUY_MIN) return {rating:'Strong Buy', cls:'rating-StrongBuy'};
+  if (changePct >= BUY_MIN)        return {rating:'Buy',        cls:'rating-Buy'};
+  return {rating:'Neutral', cls:'rating-Neutral'};
+}
+
+/* ------------------- 3️⃣ BUILD WATCH‑LIST ------------------- */
+async function buildWatchlist(){
+  // Destroy existing DataTable instance if it exists
+  if ($.fn.DataTable.isDataTable('#watchlistTable')) {
+    $('#watchlistTable').DataTable().destroy();
+  }
+
+  const selectedTF = Object.entries(TF_MAP)
+    .filter(([ck,_])=> document.getElementById(ck).checked)
+    .map(([ck,info])=> ({key:ck, label:info.label}));
+
+  // Rebuild the header structure dynamically
+  const headerHtml = `
+    <tr>
+      <th>Symbol</th><th>Last Price (USDT)</th><th>24 h Volume (USD)</th>
+      ${selectedTF.map(tf=>`<th>${tf.label}</th>`).join('')}
+    </tr>
+  `;
+  document.querySelector('#watchlistTable thead').innerHTML = headerHtml;
+
+  let tickers;
+  try { 
+    tickers = await getSpotTickers(); 
+  } catch(e) { 
+    alert('Failed to load tickers: '+e); 
+    return; 
+  }
+
+  const rows = [];
+  for (const t of tickers){
+    const changePct = (Number(t.changeUtc24h) || Number(t.change24h) || 0) * 100;
+    const ratingObj = rateFromChange(changePct);
+
+    if (['Buy','Strong Buy'].includes(ratingObj.rating)){
+      const ratingCells = selectedTF.map(()=> `<td class="${ratingObj.cls}">${ratingObj.rating}</td>`).join('');
+      
+      const price = Number(t.lastPr);
+      const volume = price * Number(t.usdtVolume);
+      
+      // Note the data-order attribute: This allows DataTables to sort numbers numerically rather than by string
+      const row = `
+        <tr>
+          <td><a href="https://www.bitget.com/en/spot/${t.symbol}" target="_blank"><strong>${t.symbol}</strong></a></td>
+          <td data-order="${price}">${price.toFixed(5)}</td>
+          <td data-order="${volume}">${volume.toLocaleString(undefined,{style:'currency',currency:'USD',minimumFractionDigits:0})}</td>
+          ${ratingCells}
+        </tr>`;
+      rows.push(row);
+    }
+  }
+
+  document.querySelector('#watchlistTable tbody').innerHTML = rows.join('');
+
+  // Initialize DataTable
+  $('#watchlistTable').DataTable({
+    pageLength: 10,
+    lengthMenu: [5, 10, 25, 50, 100],
+    order: [[2, 'desc']], // Sort by Volume by default
+    language: {
+      emptyTable: "No symbols meet the Buy/Strong Buy filter."
+    }
+  });
+}
+
+/* ------------------- 4️⃣ BREAKOUT SCANNER ------------------- */
+let scanInterval = null;
+const notified = new Set();
+
+async function scanBreakouts(){
+  let matchCount = 0;
+  let hasNew = false;
+
+  try {
+    const data = await fetchJSON('https://api.bitget.com/api/v2/spot/market/tickers');
+    const tickers = data.data.filter(t=>{
+      const isUSDT = t.symbol?.endsWith('USDT');
+      const price   = Number(t.lastPr);
+      const volume  = Number(t.usdtVolume || t.quoteVolume || 0);
+      const change  = (Number(t.changeUtc24h)||Number(t.change24h)||0)*100;
+      return isUSDT && change >= CHANGE_THRESHOLD && price*volume >= MIN_VOLUME_USD;
+    });
+
+    const rows = [];
+    for (const t of tickers){
+      matchCount++;
+      const price = Number(t.lastPr);
+      const volume = price * Number(t.usdtVolume || t.quoteVolume || 0);
+      const changePct = ((Number(t.changeUtc24h)||Number(t.change24h)||0)*100).toFixed(2);
+      
+      // Include data-order for numerical sorting support
+      rows.push(`
+        <tr>
+          <td><strong>${t.symbol}</strong></td>
+          <td data-order="${price}">${price.toFixed(5)}</td>
+          <td data-order="${changePct}"><span class="badge">+${changePct}%</span></td>
+          <td data-order="${volume}">$${volume.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+        </tr>
+      `);
+
+      if (!notified.has(t.symbol)){
+        notified.add(t.symbol);
+        hasNew = true;
+        new Notification('🚀 Bitget Breakout Alert!',{
+          body:`${t.symbol} +${changePct}%`,
+          icon:"https://www.tradingview.com/static/images/desktop-icon.png"
+        });
+      }
+    }
+
+    // Destroy existing Breakout datatable
+    if ($.fn.DataTable.isDataTable('#breakoutTable')) {
+      $('#breakoutTable').DataTable().destroy();
+    }
+
+    document.querySelector('#breakoutTable tbody').innerHTML = rows.join('');
+
+    // Re-initialize Breakout DataTables
+    $('#breakoutTable').DataTable({
+      pageLength: 5,
+      lengthMenu: [5, 10, 25, 50],
+      order: [[2, 'desc']], // Sort by % change highest to lowest
+      language: {
+        emptyTable: `No coins meet the ${CHANGE_THRESHOLD}% filter (last checked ${new Date().toLocaleTimeString()}).`
+      }
+    });
+
+    if (hasNew) playBeep();
+
+  } catch (err) {
+    console.error('Scanner error →',err);
+  }
+}
+
+/* ------------------- 5️⃣ AUDIO BEEP ------------------- */
+function playBeep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  }catch(e){ console.error('Audio error',e); }
+}
+
+/* ------------------- 6️⃣ UI WIRING ------------------- */
+document.getElementById('refreshBtn').addEventListener('click',()=>buildWatchlist());
+
+document.getElementById('activateBtn').addEventListener('click',async()=>{
+  const ac = new (window.AudioContext||window.webkitAudioContext)();
+  if (ac.state==='suspended') await ac.resume();
+
+  if (!('Notification' in window)){
+    alert('This browser does not support desktop notifications.');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm!=='granted'){
+    alert('Notification permission required.');
+    return;
+  }
+
+  document.getElementById('status').textContent='Active – monitoring & sound enabled…';
+  document.getElementById('status').className='status-active';
+
+  scanBreakouts(); 
+  if (scanInterval) clearInterval(scanInterval);
+  scanInterval = setInterval(scanBreakouts, 60_000); // Check every minute
+});
+
+/* ------------------- 7️⃣ INITIAL LOAD ------------------- */
+window.addEventListener('load',() => {
+  // Setup empty datatables on initial load before user clicks anything
+  $('#breakoutTable').DataTable({ 
+    language: { emptyTable: "Click “Enable Scanner” to start monitoring…" },
+    pageLength: 5
+  });
+  
+  buildWatchlist();
+});
+</script>
+</body>
+</html>

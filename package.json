@@ -1,0 +1,25 @@
+{
+  "name": "bitget-trader-dashboard",
+  "version": "1.0.0",
+  "description": "Express backend + static dashboard for monitoring Bitget connectivity, deployable to Render.com.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "bitget",
+    "crypto",
+    "express",
+    "render"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.19.2"
+  }
+}
